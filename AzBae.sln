@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CLI", "src\CLI\CLI.csproj", "{77CA0325-B164-42D6-82DA-08FC6FD77DEF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GUI", "src\GUI\GUI.csproj", "{648FE2DA-B4E2-49FC-867B-615A3ACA859F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{77CA0325-B164-42D6-82DA-08FC6FD77DEF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{77CA0325-B164-42D6-82DA-08FC6FD77DEF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{77CA0325-B164-42D6-82DA-08FC6FD77DEF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{77CA0325-B164-42D6-82DA-08FC6FD77DEF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{648FE2DA-B4E2-49FC-867B-615A3ACA859F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{648FE2DA-B4E2-49FC-867B-615A3ACA859F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{648FE2DA-B4E2-49FC-867B-615A3ACA859F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{648FE2DA-B4E2-49FC-867B-615A3ACA859F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
