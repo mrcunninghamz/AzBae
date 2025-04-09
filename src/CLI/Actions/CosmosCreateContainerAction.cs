@@ -35,7 +35,9 @@ public class CosmosCreateContainerAction : AzBaeAction<CosmosCreateContainerComm
             );
         }
         
+        
         using CosmosClient cosmosClient = new(Settings.AccountEndpoint, Settings.AccountKey);
+        
         await AnsiConsole.Status()
             .StartAsync("Creating things...", async ctx =>
             {

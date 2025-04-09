@@ -2,93 +2,82 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using FluentValidation;
+using FluentValidation.Results;
 using GUI.Configuration;
+using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 
 namespace GUI.Models.Cosmos;
 
-public partial class CreateContainerViewModel : ObservableObject
+public partial class CreateContainerViewModel : BaseCosmosViewModel
 {
     public RelayCommand CreateContainerCommand { get; }
-    
-    private readonly CosmosAppSettings _cosmosAppSettings;
-
-    [ObservableProperty]
-    private string _accountEndpoint;
 
     [ObservableProperty] 
     private string _accountKey;
     
     [ObservableProperty]
-    private string _databaseName;
-    
-    [ObservableProperty]
-    private string _containerName;
-    
-    [ObservableProperty]
-    private string _partitionKey;
-    
-    [ObservableProperty]
     private bool _canCreateContainer;
 
-    public CreateContainerViewModel(IOptions<CosmosAppSettings> cosmosAppSettings)
+    public CreateContainerViewModel(IOptions<CosmosAppSettings> cosmosAppSettings) : base(cosmosAppSettings.Value)
     {
-        _cosmosAppSettings = cosmosAppSettings.Value;
-
         CreateContainerCommand = new RelayCommand(async void () =>
         {
             await Create();
         });
     }
     
-    public void Initialized ()
+    public override void Initialized ()
     {
-        AccountEndpoint = _cosmosAppSettings.AccountEndpoint;
-        AccountKey = _cosmosAppSettings.AccountKey;
-        DatabaseName = _cosmosAppSettings.DatabaseName;
-        ContainerName = _cosmosAppSettings.ContainerName;
-        PartitionKey = _cosmosAppSettings.PartitionKey;
+        base.Initialized();
+        AccountKey = CosmosAppSettings.AccountKey;
         Validate();
         
         SendMessage(CreateContainerActionType.Initialize);
     }
 
-    public void Validate()
+    public override void Validate()
     {
         var validator = new CreateContainerViewModelValidator();
-        CanCreateContainer = validator.Validate(this).IsValid;
+        var validationResult = validator.Validate(this);
+        CanCreateContainer = validationResult.IsValid;
         SendMessage(CreateContainerActionType.Validate);
+        
+        Errors = string.Join(Environment.NewLine, validationResult.Errors);
     }
 
     private async Task Create()
     {
         SendMessage (CreateContainerActionType.CreateProgress);
-        await Task.Delay (TimeSpan.FromSeconds (1));
-    }
-    
-    
-    
-    private void SendMessage (CreateContainerActionType actionType, string message = "")
-    {
-        WeakReferenceMessenger.Default.Send(new Message<CreateContainerActionType> { Value = actionType });
+        
+        using CosmosClient cosmosClient = new(AccountEndpoint, AccountKey);
+        SendMessage (CreateContainerActionType.CreateDatabaseProgress);
+        Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(
+            id: DatabaseName
+        );
+        SendMessage (CreateContainerActionType.CreateContainerProgress);
+        Container container = await database.CreateContainerIfNotExistsAsync(
+            id: ContainerName,
+            partitionKeyPath: $"/{PartitionKey}"
+        );
+        SendMessage (CreateContainerActionType.CreateFinished);
     }
 }
 
-public class CreateContainerViewModelValidator : AbstractValidator<CreateContainerViewModel>
+public class CreateContainerViewModelValidator : BaseCosmosViewModelValidator<CreateContainerViewModel>
 {
     public CreateContainerViewModelValidator()
     {
-        RuleFor(x => x.AccountEndpoint).NotNull().NotEmpty();
         RuleFor(x => x.AccountKey).NotNull().NotEmpty();
-        RuleFor(x => x.DatabaseName).NotNull().NotEmpty();
-        RuleFor(x => x.ContainerName).NotNull().NotEmpty();
-        RuleFor(x => x.PartitionKey).NotNull().NotEmpty();
     }
 }
 
 public enum CreateContainerActionType
 {
     CreateProgress,
+    CreateDatabaseProgress,
+    CreateContainerProgress,
+    CreateFinished,
     ClearForm,
     Validate,
     Initialize

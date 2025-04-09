@@ -7,7 +7,6 @@ using GUI.Views.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Terminal.Gui;
 using ConfigurationManager = Microsoft.Extensions.Configuration.ConfigurationManager;
 
 HostApplicationBuilderSettings settings = new()
