@@ -45,9 +45,15 @@ public class MainWindow : Window
                 new MenuItem("Create Container", string.Empty,
                     () =>
                     {
-                        createContainerView.MenuBar = menu;
+                        var replaceMenu = SubViews.First();
+                        RemoveAll();
                         createContainerView.InitializeComponent();
-                        Application.Run(createContainerView);
+                        // Application.Run(createContainerView);
+                        
+        
+                        Add(menu);
+                        createContainerView.Y = Pos.Bottom(menu) + 1;
+                        Add(createContainerView);
                     })
             }),
             new MenuBarItem("_Quit", "", () => { Application.RequestStop(); })

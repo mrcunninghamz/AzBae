@@ -5,12 +5,19 @@ using Terminal.Gui;
 
 namespace GUI.Views.Cosmos;
 
-public class CreateContainerView : Window, IRecipient<RequestMessage<CreateContainerActions>>
+public class CreateContainerView : Window, IRecipient<Message<CreateContainerActionType>>
 {
-    public  MenuBar MenuBar { get; set; }
-    private Label _titleLabel;
-    private TextField _accountEndpointField;
-    private Label _accountEndpointLabel;
+    private readonly TextField _accountEndpointField = new();
+    private readonly Label _accountEndpointLabel = new();
+    private readonly Label _accountKeylabel = new();
+    private readonly TextField _accountKeyField = new();
+    private readonly Label _databaseNamelabel = new();
+    private readonly TextField _databaseNameField = new();
+    private readonly Label _containerNamelabel = new();
+    private readonly TextField _containerNameField = new();
+    private readonly Label _partitionKeylabel = new();
+    private readonly TextField _partitionKeyField = new();
+    private Button _createButton;
 
     public CreateContainerView(CreateContainerViewModel viewModel)
     {
@@ -20,39 +27,112 @@ public class CreateContainerView : Window, IRecipient<RequestMessage<CreateConta
     }
     public CreateContainerViewModel ViewModel { get; set; }
 
-    public void Receive(RequestMessage<CreateContainerActions> message)
+    public void Receive(Message<CreateContainerActionType> message)
     {
-        throw new NotImplementedException();
+        switch (message.Value)
+        {
+            case CreateContainerActionType.Initialize:
+                _accountEndpointField.Text = ViewModel.AccountEndpoint;
+                _accountKeyField.Text = ViewModel.AccountKey;
+                _databaseNameField.Text = ViewModel.DatabaseName;
+                _containerNameField.Text = ViewModel.ContainerName;
+                _partitionKeyField.Text = ViewModel.PartitionKey;
+                _createButton.Enabled = ViewModel.CanCreateContainer;
+                break;
+            case CreateContainerActionType.Validate:
+                _createButton.Enabled = ViewModel.CanCreateContainer;
+                break;
+        }
     }
 
     public void InitializeComponent()
     {
-        Add(MenuBar);
-        _accountEndpointLabel = new Label
+        if (IsInitialized)
         {
-            Text = "Accoutn Endpoint:",
+            return;
+        }
+        
+        // Account Endpoint
+        SetLabelAndField(label: _accountEndpointLabel, labelText: "Account Endpoint:", textField: _accountEndpointField);
+        
+        // Account Key
+        SetLabelAndField(label: _accountKeylabel, labelText: "Account Key:", textField: _accountKeyField, topLabel: _accountEndpointLabel);
+        
+        // Database name
+        SetLabelAndField(label: _databaseNamelabel, labelText: "Database Name:", textField: _databaseNameField, topLabel: _accountKeylabel);
+        
+        // Container Name
+        SetLabelAndField(label: _containerNamelabel, labelText: "Container Name:", textField: _containerNameField, topLabel: _databaseNamelabel);
+       
+        // PartitionKey
+        SetLabelAndField(label: _partitionKeylabel, labelText: "Partition Key:", textField: _partitionKeyField, topLabel: _containerNamelabel);
+        
+
+        
+        _accountEndpointField.TextChanged += (_, __) =>
+        {
+            ViewModel.AccountEndpoint = _accountEndpointField.Text;
+            ViewModel.Validate();
+        };
+        _accountKeyField.TextChanged += (_, __) =>
+        {
+            ViewModel.AccountKey = _accountKeyField.Text;
+            ViewModel.Validate();
+        };
+        _databaseNameField.TextChanged += (_, __) =>
+        {
+            ViewModel.DatabaseName = _databaseNameField.Text;
+            ViewModel.Validate();
+        };
+        _containerNameField.TextChanged += (_, __) =>
+        {
+            ViewModel.ContainerName = _containerNameField.Text;
+            ViewModel.Validate();
+        };
+        _partitionKeyField.TextChanged += (_, __) =>
+        {
+            ViewModel.PartitionKey = _partitionKeyField.Text;
+            ViewModel.Validate();
+        };
+
+        _createButton = new Button
+        {
+            Text = "Create Container",
+            Y = Pos.Bottom(_partitionKeylabel) + 1
+        };
+        Add(_createButton);
+
+        _createButton.Accepting += (_, __) =>
+        {
+            if (!ViewModel.CanCreateContainer) { return; }
+            ViewModel.CreateContainerCommand.Execute(null);
+        };
             
-            Y = Pos.Bottom (MenuBar) + 1,
-        };
-        Add(_accountEndpointLabel);
-        _accountEndpointField = new TextField
+        
+        
+        Initialized += (_, _) =>
         {
-            // Position text field adjacent to the label
-            X = Pos.Right (_accountEndpointLabel) + 1,
-            Y = Pos.Bottom (MenuBar) + 1,
-
-            // Fill remaining horizontal space
-            Width = Dim.Fill ()
+            ViewModel.Initialized ();
         };
-        _accountEndpointField.Width = 40;
-        Add(_accountEndpointField);
     }
-}
 
+    private void SetLabelAndField(Label label, string labelText, TextField textField, Label? topLabel = null)
+    {
+        label.Text = labelText;
+        
+        // Position text field adjacent to the label
+        textField.X = Pos.Right(label) + 1;
+        
+        // Fill remaining horizontal space
+        textField.Width = Dim.Fill();
+        textField.Width = 100;
+        
+        if (topLabel != null)
+        {
+            label.Y = Pos.Bottom(topLabel) + 1;
+            textField.Y = Pos.Bottom(topLabel) + 1;
+        }
 
-
-public enum CreateContainerActions
-{
-    CreateProgress,
-    ClearForm
+        Add(label, textField);
+    }
 }
