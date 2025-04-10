@@ -6,31 +6,22 @@ namespace GUI.Views;
 
 public abstract class BaseView<T> : Window, IRecipient<Message<T>> where T : Enum
 {
-    protected Dialog ErrorDialog = new Dialog();
-    protected Label ErrorDialogLabel = new Label();
-    
-    public virtual void Receive(Message<T> message)
+
+    protected BaseView()
     {
-        throw new NotImplementedException();
+        WeakReferenceMessenger.Default.Register (this);
     }
 
     public virtual void InitializeComponent()
     {
-        ErrorDialog.Title = "Error:";
-        ErrorDialog.ButtonAlignment = Alignment.Center;
-        ErrorDialogLabel.Text = "Something went wrong.";
-        ErrorDialog.Add(ErrorDialogLabel);
-        var button = new Button
+        if (IsInitialized)
         {
-            Text = "Close",
-            Y = Pos.Bottom(ErrorDialogLabel) + 1
-        };
-        ErrorDialog.AddButton(button);
-                
-        button.Accepting += (_, _) => Remove(ErrorDialog);
+            return;
+        }
     }
 
-
+    public abstract void Receive(Message<T> message);
+    
     protected void SetLabelAndField(Label label, string labelText, TextField textField, Label? topLabel = null)
     {
         label.Text = labelText;
@@ -49,5 +40,10 @@ public abstract class BaseView<T> : Window, IRecipient<Message<T>> where T : Enu
         }
 
         Add(label, textField);
+    }
+    
+    protected void ShowErrorDialog(string errorMessage)
+    {
+        MessageBox.ErrorQuery(title: "Error", message: errorMessage, buttons: "OK");
     }
 }

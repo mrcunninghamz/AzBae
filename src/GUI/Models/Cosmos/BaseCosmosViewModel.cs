@@ -1,9 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using FluentValidation;
 using GUI.Configuration;
 
 namespace GUI.Models.Cosmos;
 
-public abstract partial class BaseCosmosViewModel : BaseViewModel<CreateContainerActionType>
+public abstract partial class BaseCosmosViewModel<T> :  BaseViewModel<T> where T : Enum
 {
     protected readonly CosmosAppSettings CosmosAppSettings;
 
@@ -23,11 +24,24 @@ public abstract partial class BaseCosmosViewModel : BaseViewModel<CreateContaine
     {
         CosmosAppSettings = cosmosAppSettings;
     }
-    public override void Initialized()
+    public override void Initialize()
     {
         AccountEndpoint = CosmosAppSettings.AccountEndpoint;
         DatabaseName = CosmosAppSettings.DatabaseName;
         ContainerName = CosmosAppSettings.ContainerName;
         PartitionKey = CosmosAppSettings.PartitionKey;
+    }
+}
+
+public abstract class BaseCosmosViewModelValidator<T, TType> : AbstractValidator<T> 
+    where T : BaseCosmosViewModel<TType>
+    where TType : Enum
+{
+    protected BaseCosmosViewModelValidator()
+    {
+        RuleFor(x => x.AccountEndpoint).NotNull().NotEmpty();
+        RuleFor(x => x.DatabaseName).NotNull().NotEmpty();
+        RuleFor(x => x.ContainerName).NotNull().NotEmpty();
+        RuleFor(x => x.PartitionKey).NotNull().NotEmpty();
     }
 }

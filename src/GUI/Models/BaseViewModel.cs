@@ -13,7 +13,7 @@ public abstract class BaseViewModel<T> : ObservableObject where T : Enum
         set => SetProperty (ref _errors, value);
     }
 
-    public abstract void Initialized();
+    public abstract void Initialize();
 
     public abstract void Validate();
     

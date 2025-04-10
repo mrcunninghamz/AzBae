@@ -5,88 +5,21 @@ using Terminal.Gui;
 
 namespace GUI.Views.Cosmos;
 
-public class CreateContainerView : BaseCosmosView<CreateContainerActionType>
+public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
 {
     private readonly Label _accountKeylabel = new();
     private readonly TextField _accountKeyField = new();
     private Button _createButton;
-    private Dialog _azureDialog;
     private readonly CreateContainerViewModel _viewModel;
 
     public CreateContainerView(CreateContainerViewModel viewModel) : base(viewModel)
     {
-        WeakReferenceMessenger.Default.Register (this);
         Title = "Create Cosmos Container";
         _viewModel = viewModel;
     }
 
-    public override void Receive(Message<CreateContainerActionType> message)
-    {
-        switch (message.Value)
-        {
-            case CreateContainerActionType.Initialize:
-                AccountEndpointField.Text = _viewModel.AccountEndpoint;
-                _accountKeyField.Text = _viewModel.AccountKey;
-                DatabaseNameField.Text = _viewModel.DatabaseName;
-                ContainerNameField.Text = _viewModel.ContainerName;
-                PartitionKeyField.Text = _viewModel.PartitionKey;
-                _createButton.Enabled = _viewModel.CanCreateContainer;
-                break;
-            case CreateContainerActionType.Validate:
-                // _createButton.Enabled = _viewModel.CanCreateContainer;
-                break;
-            case CreateContainerActionType.CreateProgress:
-                _azureDialog = new Dialog
-                {
-                    Title = "Working with Azure...",
-                    ButtonAlignment = Alignment.Center
-                };
-                _azureDialog.Add(new Label
-                {
-                    Text = "Connecting to Azure...",
-                });
-                Add(_azureDialog);
-                break;
-            case CreateContainerActionType.CreateDatabaseProgress:
-                _azureDialog.RemoveAll();
-                _azureDialog.Add(new Label
-                {
-                    Text = "Creating Cosmos Database if it doesn't already exist...",
-                });
-                break;
-            case CreateContainerActionType.CreateContainerProgress:
-                _azureDialog.RemoveAll();
-                _azureDialog.Add(new Label
-                {
-                    Text = "Creating cosmos container if it doesn't already exist...",
-                });
-                break;
-            case CreateContainerActionType.CreateFinished:
-                _azureDialog.RemoveAll();
-                var label = new Label
-                {
-                    Text = "Finished!",
-                };
-                _azureDialog.Add(label);
-                var button = new Button
-                {
-                    Text = "Close",
-                    Y = Pos.Bottom(label) + 1
-                };
-                _azureDialog.AddButton(button);
-                
-                button.Accepting += (_, _) => Remove(_azureDialog);
-                break;
-        }
-    }
-
     public override void InitializeComponent()
     {
-        if (IsInitialized)
-        {
-            return;
-        }
-        
         base.InitializeComponent();
         
         // Account Key
@@ -113,8 +46,7 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionType>
             _viewModel.Validate();
             if (!_viewModel.CanCreateContainer)
             {
-                ErrorDialogLabel.Text = _viewModel.Errors;
-                Add(ErrorDialog);
+                ShowErrorDialog(_viewModel.Errors);
                 return;
             }
             _viewModel.CreateContainerCommand.Execute(null);
@@ -122,7 +54,45 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionType>
         
         Initialized += (_, _) =>
         {
-            _viewModel.Initialized ();
+            _viewModel.Initialize ();
         };
+    }
+
+    public override void Receive(Message<CreateContainerActionTypes> message)
+    {
+        switch (message.Value)
+        {
+            case CreateContainerActionTypes.Initialize:
+                AccountEndpointField.Text = _viewModel.AccountEndpoint;
+                _accountKeyField.Text = _viewModel.AccountKey;
+                DatabaseNameField.Text = _viewModel.DatabaseName;
+                ContainerNameField.Text = _viewModel.ContainerName;
+                PartitionKeyField.Text = _viewModel.PartitionKey;
+                _createButton.Enabled = _viewModel.CanCreateContainer;
+                break;
+            case CreateContainerActionTypes.Validate:
+                // _createButton.Enabled = _viewModel.CanCreateContainer;
+                break;
+            case CreateContainerActionTypes.CreateProgress:
+                AzureDialog.Text = "Connecting to Azure...";
+                Add(AzureDialog);
+                break;
+            case CreateContainerActionTypes.CreateDatabaseProgress:
+                AzureDialog.Text = "Creating Cosmos Database if it doesn't already exist...";
+                break;
+            case CreateContainerActionTypes.CreateContainerProgress:
+                AzureDialog.Text = "Creating cosmos container if it doesn't already exist...";
+                break;
+            case CreateContainerActionTypes.CreateFinished:
+                AzureDialog.Text = "Finished";
+                var button = new Button
+                {
+                    Text = "Close"
+                };
+                AzureDialog.AddButton(button);
+                
+                button.Accepting += (_, _) => Remove(AzureDialog);
+                break;
+        }
     }
 }

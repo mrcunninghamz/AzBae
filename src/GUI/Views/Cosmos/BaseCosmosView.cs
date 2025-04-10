@@ -5,7 +5,14 @@ namespace GUI.Views.Cosmos;
 
 public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
 {
-    private readonly BaseCosmosViewModel _viewModel;
+    private readonly BaseCosmosViewModel<T> _viewModel;
+    protected Dialog AzureDialog = new()
+    {
+        Title = "Working with Azure...",
+        ButtonAlignment = MessageBox.DefaultButtonAlignment,
+        ButtonAlignmentModes = AlignmentModes.StartToEnd | AlignmentModes.AddSpaceBetweenItems,
+        BorderStyle = MessageBox.DefaultBorderStyle,
+    };
     protected readonly TextField AccountEndpointField = new();
     protected readonly Label AccountEndpointLabel = new();
     protected readonly Label DatabaseNamelabel = new();
@@ -14,13 +21,26 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
     protected readonly TextField ContainerNameField = new();
     protected readonly Label PartitionKeylabel = new();
     protected readonly TextField PartitionKeyField = new();
-    protected BaseCosmosView(BaseCosmosViewModel viewModel)
+    protected BaseCosmosView(BaseCosmosViewModel<T> viewModel)
     {
         _viewModel = viewModel;
     }
 
     public override void InitializeComponent()
     {
+        base.InitializeComponent();
+        
+        
+
+        AzureDialog.Width = Dim.Auto (DimAutoStyle.Auto,
+            minimumContentDim: Dim.Func (() => (int)((Application.Screen.Width - AzureDialog.GetAdornmentsThickness ().Horizontal) * (0 / 100f))),
+            maximumContentDim: Dim.Func (() => (int)((Application.Screen.Width - AzureDialog.GetAdornmentsThickness ().Horizontal) * 0.9f)));
+
+        AzureDialog.Height = Dim.Auto (DimAutoStyle.Auto,
+            minimumContentDim: Dim.Func (() => (int)((Application.Screen.Height - AzureDialog.GetAdornmentsThickness ().Vertical) * (0 / 100f))),
+            maximumContentDim: Dim.Func (() => (int)((Application.Screen.Height - AzureDialog.GetAdornmentsThickness ().Vertical) * 0.9f)));
+        AzureDialog.ColorScheme = Colors.ColorSchemes ["Dialog"];
+        
         // Account Endpoint
         SetLabelAndField(label: AccountEndpointLabel, labelText: "Account Endpoint:", textField: AccountEndpointField);
         
@@ -32,8 +52,6 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
        
         // PartitionKey
         SetLabelAndField(label: PartitionKeylabel, labelText: "Partition Key:", textField: PartitionKeyField, topLabel: ContainerNamelabel);
-        
-
         
         AccountEndpointField.TextChanged += (_, __) =>
         {
@@ -52,7 +70,5 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
         {
             _viewModel.PartitionKey = PartitionKeyField.Text;
         };
-        
-        base.InitializeComponent();
     }
 }

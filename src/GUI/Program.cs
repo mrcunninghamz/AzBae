@@ -34,6 +34,8 @@ builder.Services.AddSingleton<MainWindow>();
 
 builder.Services.AddSingleton<CreateContainerView>();
 builder.Services.AddSingleton<CreateContainerViewModel>();
+builder.Services.AddSingleton<DeleteRecordsView>();
+builder.Services.AddSingleton<DeleteRecordsViewModel>();
 
 builder.Services.AddHostedService<AppGui>();
 

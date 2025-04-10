@@ -1,15 +1,13 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
 using FluentValidation;
-using FluentValidation.Results;
 using GUI.Configuration;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 
 namespace GUI.Models.Cosmos;
 
-public partial class CreateContainerViewModel : BaseCosmosViewModel
+public partial class CreateContainerViewModel : BaseCosmosViewModel<CreateContainerActionTypes>
 {
     public RelayCommand CreateContainerCommand { get; }
 
@@ -27,13 +25,14 @@ public partial class CreateContainerViewModel : BaseCosmosViewModel
         });
     }
     
-    public override void Initialized ()
+    public override void Initialize()
     {
-        base.Initialized();
+        base.Initialize();
+        
         AccountKey = CosmosAppSettings.AccountKey;
         Validate();
         
-        SendMessage(CreateContainerActionType.Initialize);
+        SendMessage(CreateContainerActionTypes.Initialize);
     }
 
     public override void Validate()
@@ -41,30 +40,30 @@ public partial class CreateContainerViewModel : BaseCosmosViewModel
         var validator = new CreateContainerViewModelValidator();
         var validationResult = validator.Validate(this);
         CanCreateContainer = validationResult.IsValid;
-        SendMessage(CreateContainerActionType.Validate);
+        SendMessage(CreateContainerActionTypes.Validate);
         
         Errors = string.Join(Environment.NewLine, validationResult.Errors);
     }
 
     private async Task Create()
     {
-        SendMessage (CreateContainerActionType.CreateProgress);
+        SendMessage (CreateContainerActionTypes.CreateProgress);
         
         using CosmosClient cosmosClient = new(AccountEndpoint, AccountKey);
-        SendMessage (CreateContainerActionType.CreateDatabaseProgress);
+        SendMessage (CreateContainerActionTypes.CreateDatabaseProgress);
         Database database = await cosmosClient.CreateDatabaseIfNotExistsAsync(
             id: DatabaseName
         );
-        SendMessage (CreateContainerActionType.CreateContainerProgress);
+        SendMessage (CreateContainerActionTypes.CreateContainerProgress);
         Container container = await database.CreateContainerIfNotExistsAsync(
             id: ContainerName,
             partitionKeyPath: $"/{PartitionKey}"
         );
-        SendMessage (CreateContainerActionType.CreateFinished);
+        SendMessage (CreateContainerActionTypes.CreateFinished);
     }
 }
 
-public class CreateContainerViewModelValidator : BaseCosmosViewModelValidator<CreateContainerViewModel>
+public class CreateContainerViewModelValidator : BaseCosmosViewModelValidator<CreateContainerViewModel, CreateContainerActionTypes>
 {
     public CreateContainerViewModelValidator()
     {
@@ -72,7 +71,7 @@ public class CreateContainerViewModelValidator : BaseCosmosViewModelValidator<Cr
     }
 }
 
-public enum CreateContainerActionType
+public enum CreateContainerActionTypes
 {
     CreateProgress,
     CreateDatabaseProgress,

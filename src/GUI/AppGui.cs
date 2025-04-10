@@ -33,7 +33,9 @@ public class AppGui : IHostedService
 
 public class MainWindow : Window
 {
-    public MainWindow(CreateContainerView createContainerView)
+    public MainWindow(
+        CreateContainerView createContainerView,
+        DeleteRecordsView deleteRecordsView)
     {
         Title = "AzBae";
         
@@ -45,15 +47,20 @@ public class MainWindow : Window
                 new MenuItem("Create Container", string.Empty,
                     () =>
                     {
-                        var replaceMenu = SubViews.First();
                         RemoveAll();
                         createContainerView.InitializeComponent();
-                        // Application.Run(createContainerView);
-                        
-        
                         Add(menu);
                         createContainerView.Y = Pos.Bottom(menu) + 1;
                         Add(createContainerView);
+                    }),
+                new MenuItem("Delete Records", string.Empty,
+                    () =>
+                    {
+                        RemoveAll();
+                        deleteRecordsView.InitializeComponent();
+                        Add(menu);
+                        deleteRecordsView.Y = Pos.Bottom(menu) + 1;
+                        Add(deleteRecordsView);
                     })
             }),
             new MenuBarItem("_Quit", "", () => { Application.RequestStop(); })
