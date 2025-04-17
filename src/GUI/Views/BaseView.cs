@@ -6,6 +6,16 @@ namespace GUI.Views;
 
 public abstract class BaseView<T> : Window, IRecipient<Message<T>> where T : Enum
 {
+    
+    protected Dialog SettingsDialog = new()
+    {
+        Title = "Settings...",
+        ButtonAlignment = MessageBox.DefaultButtonAlignment,
+        ButtonAlignmentModes = AlignmentModes.StartToEnd | AlignmentModes.AddSpaceBetweenItems,
+        BorderStyle = MessageBox.DefaultBorderStyle,
+    };
+
+    protected Button ViewSettingsDialogButton;
 
     protected BaseView()
     {
@@ -38,8 +48,27 @@ public abstract class BaseView<T> : Window, IRecipient<Message<T>> where T : Enu
             label.Y = Pos.Bottom(topLabel) + 1;
             textField.Y = Pos.Bottom(topLabel) + 1;
         }
+        
+        
+        ViewSettingsDialogButton = new Button
+        {
+            Text = "View Settings"
+        };
 
-        Add(label, textField);
+        ViewSettingsDialogButton.Accepting += (_, _) =>
+        {
+            Add(SettingsDialog);
+        };
+        
+        var settingsDialogCloseButton = new Button
+        {
+            Text = "Close"
+        };
+        SettingsDialog.AddButton(settingsDialogCloseButton);
+                
+        settingsDialogCloseButton.Accepting += (_, _) => Remove(SettingsDialog);
+        
+        Add(ViewSettingsDialogButton);
     }
     
     protected void ShowErrorDialog(string errorMessage)

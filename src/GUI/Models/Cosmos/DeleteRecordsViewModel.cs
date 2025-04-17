@@ -40,7 +40,7 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
     private List<JObject> _tableData = [];
 
     private int _page;
-    private int _pageSize = 1;
+    private int _pageSize = 10;
     private Container _container;
 
     public DeleteRecordsViewModel(IOptions<CosmosAppSettings> cosmosAppSettings) : base(cosmosAppSettings.Value)
