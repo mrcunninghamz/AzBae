@@ -11,6 +11,7 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
     private readonly Label _queryLabel = new();
     private readonly TextField _queryField = new();
     private Button _queryButton;
+    private Button _deleteRecordsButton;
     private TableView _tableView = new() { X = 0, Y = 0, Width = Dim.Fill (), Height = Dim.Fill (1) };
     private Window _tableWindow = new() { X = 0, Y = 0, Width = Dim.Fill (), Height = Dim.Fill (1) };
     
@@ -43,7 +44,35 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
             }
             _viewModel.RunQueryCommand.Execute(null);
         };
-        Add(_queryLabel, _queryField, _queryButton);
+        
+        // Add Delete Records button next to Settings button
+        _deleteRecordsButton = new Button
+        {
+            Text = "Delete Records",
+            Y = Pos.Y(_queryButton),
+            X = Pos.Right(_queryButton) + 1,
+            Visible = _viewModel.TableData.Any()
+        };
+        _deleteRecordsButton.Accepting += (_, __) =>
+        {
+            if (_viewModel.TableData == null || !_viewModel.TableData.Any())
+            {
+                MessageBox.Query("Error", "No records to delete", "OK");
+                return;
+            }
+            
+            var result = MessageBox.Query(
+                "Confirm Delete", 
+                $"Are you sure you want to delete {_viewModel.TableData.Count} records?", 
+                "Yes", "No");
+                
+            if (result == 0) // Yes
+            {
+                _viewModel.DeleteCommand.Execute(null);
+            }
+        };
+        
+        Add(_queryLabel, _queryField, _queryButton, _deleteRecordsButton);
 
         InitializeTableView();
         
@@ -83,6 +112,36 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
                 };
                 AzureDialog.AddButton(button);
                 break;
+
+            case DeleteRecordsActionTypes.DeleteRunning:
+                AzureDialog.Text = _viewModel.Message;
+                Add(AzureDialog);
+                break;
+
+            case DeleteRecordsActionTypes.DeleteFinished:
+                AzureDialog.Text = _viewModel.Message;
+                var closeButton = new Button
+                {
+                    Text = "Close",
+                };
+                closeButton.Accepting += (_, _) =>
+                {
+                    AzureDialog.RemoveAll();
+                    Remove(AzureDialog);
+                    // Refresh the table data after deletion
+                    _viewModel.TableData.Clear();
+                    _tableView.Table = new EnumerableTableSource<JObject>(
+                        _viewModel.TableData,
+                        new Dictionary<string, Func<JObject, object>>
+                        {
+                            { "ID", j => j["id"]!.ToString()},
+                            { "Raw", j => j.ToString()}
+                        }
+                    );
+                };
+                AzureDialog.AddButton(closeButton);
+                break;
+                
             case DeleteRecordsActionTypes.TableDataUpdated:
                 _tableWindow.Visible = _viewModel.TableData.Any();
                 _tableWindow.Title = _viewModel.DataTableTitle;
@@ -94,6 +153,7 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
                         { "Raw", j => j.ToString()}
                     }
                 );
+                _deleteRecordsButton.Visible = _viewModel.TableData.Any();
                 break;
             
         }
