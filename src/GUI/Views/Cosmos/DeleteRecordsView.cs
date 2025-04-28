@@ -23,8 +23,10 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
     {
         base.InitializeComponent();
         
-        SetLabelAndField(label: _queryLabel, labelText: "Query:", textField: _queryField, topLabel: PartitionKeylabel);
+        SetLabelAndField(label: _queryLabel, labelText: "Query:", textField: _queryField);
         _queryField.TextChanged += (_, __) => _viewModel.Query = _queryField.Text;
+        _queryLabel.Y = Pos.Bottom(ViewSettingsDialogButton) + 1;
+        _queryField.Y = Pos.Bottom(ViewSettingsDialogButton) + 1;
         
         _queryButton = new Button
         {
@@ -41,7 +43,7 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
             }
             _viewModel.RunQueryCommand.Execute(null);
         };
-        Add(_queryButton);
+        Add(_queryLabel, _queryField, _queryButton);
 
         InitializeTableView();
         

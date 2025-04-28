@@ -14,7 +14,6 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
 
     public CreateContainerView(CreateContainerViewModel viewModel) : base(viewModel)
     {
-        Title = "Create Cosmos Container";
         _viewModel = viewModel;
     }
 
@@ -22,6 +21,7 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
     {
         base.InitializeComponent();
         
+        Title = "Create Cosmos Container";
         // Account Key
         SetLabelAndField(label: _accountKeylabel, labelText: "Account Key:", textField: _accountKeyField, topLabel: AccountEndpointLabel);
         
@@ -37,7 +37,7 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
         _createButton = new Button
         {
             Text = "Create Container",
-            Y = Pos.Bottom(PartitionKeylabel) + 1
+            X = Pos.Right(ViewSettingsDialogButton) + 1
         };
         Add(_createButton);
 
@@ -51,6 +51,8 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
             }
             _viewModel.CreateContainerCommand.Execute(null);
         };
+
+        SettingsDialog.Add(_accountKeylabel, _accountKeyField);
         
         Initialized += (_, _) =>
         {

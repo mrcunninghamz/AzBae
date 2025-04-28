@@ -21,6 +21,7 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
     protected readonly TextField ContainerNameField = new();
     protected readonly Label PartitionKeylabel = new();
     protected readonly TextField PartitionKeyField = new();
+    
     protected BaseCosmosView(BaseCosmosViewModel<T> viewModel)
     {
         _viewModel = viewModel;
@@ -29,8 +30,6 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
     public override void InitializeComponent()
     {
         base.InitializeComponent();
-        
-        
 
         AzureDialog.Width = Dim.Auto (DimAutoStyle.Auto,
             minimumContentDim: Dim.Func (() => (int)((Application.Screen.Width - AzureDialog.GetAdornmentsThickness ().Horizontal) * (0 / 100f))),
@@ -70,5 +69,9 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
         {
             _viewModel.PartitionKey = PartitionKeyField.Text;
         };
+        
+        SettingsDialog.RemoveAll();
+        SettingsDialog.Add(AccountEndpointLabel, AccountEndpointField, DatabaseNamelabel, DatabaseNameField,
+            ContainerNamelabel, ContainerNameField, PartitionKeylabel, PartitionKeyField);
     }
 }
