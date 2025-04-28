@@ -18,6 +18,8 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
     
     public RelayCommand NextPageCommand { get; }
     
+    public RelayCommand DeleteCommand { get; }
+    
     [ObservableProperty] 
     private string _query;
 
@@ -53,6 +55,13 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
         NextPageCommand = new RelayCommand(() =>
         {
             ShowJson(Results, ++_page * _pageSize, _pageSize);
+        });
+        
+        DeleteCommand = new RelayCommand(async void () =>
+        {
+            SendMessage(DeleteRecordsActionTypes.DeleteRunning);
+            await DeleteAllAsync();
+            SendMessage(DeleteRecordsActionTypes.DeleteFinished);
         });
     }
 
