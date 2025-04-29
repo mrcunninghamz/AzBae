@@ -44,6 +44,13 @@ public partial class CreateContainerViewModel : BaseCosmosViewModel<CreateContai
         
         Errors = string.Join(Environment.NewLine, validationResult.Errors);
     }
+    protected override void DisposeManaged()
+    {
+    }
+    protected override void DisposeUnmanaged()
+    {
+        // No unmanaged resources to dispose.
+    }
 
     private async Task Create()
     {

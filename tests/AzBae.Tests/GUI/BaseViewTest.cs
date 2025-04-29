@@ -1,15 +1,11 @@
 using System.Reflection;
 using CommunityToolkit.Mvvm.Messaging;
-using TestBae.BaseClasses.AutoFixture;
+using TestBae.BaseClasses;
 
 namespace AzBae.Tests.GUI
 {
     public abstract class BaseViewTest<T> : BaseTest<T>, IDisposable where T : class
     {
-        protected BaseViewTest() : base()
-        {
-        }
-        
         /// <summary>
         /// Helper method to get private fields from an object using reflection
         /// </summary>
