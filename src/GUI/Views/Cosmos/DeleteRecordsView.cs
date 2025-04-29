@@ -17,15 +17,16 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
     
     public DeleteRecordsView(DeleteRecordsViewModel viewModel) : base(viewModel)
     {
-        Title = "Delete Cosmos Records";
+        HotKey = Key.D;
         _viewModel = viewModel;
     }
     public override void InitializeComponent()
     {
         base.InitializeComponent();
         
+        Title = "Delete Cosmos Records";
         SetLabelAndField(label: _queryLabel, labelText: "Query:", textField: _queryField);
-        _queryField.TextChanged += (_, __) => _viewModel.Query = _queryField.Text;
+        _queryField.TextChanged += (_, _) => _viewModel.Query = _queryField.Text;
         _queryLabel.Y = Pos.Bottom(ViewSettingsDialogButton) + 1;
         _queryField.Y = Pos.Bottom(ViewSettingsDialogButton) + 1;
         
@@ -34,7 +35,7 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
             Text = "Run Query",
             Y = Pos.Bottom(_queryLabel) + 1
         };
-        _queryButton.Accepting += (_, __) =>
+        _queryButton.Accepting += (_, _) =>
         {
             _viewModel.Validate();
             if (!_viewModel.CanRunQuery)
@@ -53,7 +54,8 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
             X = Pos.Right(_queryButton) + 1,
             Visible = _viewModel.TableData.Any()
         };
-        _deleteRecordsButton.Accepting += (_, __) =>
+
+        _deleteRecordsButton.Accepting += (_, _) =>
         {
             if (_viewModel.TableData == null || !_viewModel.TableData.Any())
             {
@@ -169,7 +171,7 @@ public class DeleteRecordsView : BaseCosmosView<DeleteRecordsActionTypes>
             Text = "Next Page",
             Y = 0
         };
-        nextButton.Accepting += (_, __) =>
+        nextButton.Accepting += (_, _) =>
         {
             if (_viewModel.HasMoreTableData)
             {
