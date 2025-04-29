@@ -49,6 +49,7 @@ public partial class CreateContainerViewModel : BaseCosmosViewModel<CreateContai
     }
     protected override void DisposeUnmanaged()
     {
+        // No unmanaged resources to dispose.
     }
 
     private async Task Create()
