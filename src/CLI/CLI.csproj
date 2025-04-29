@@ -30,4 +30,8 @@
         </None>
     </ItemGroup>
 
+    <ItemGroup>
+        <ProjectReference Include="..\Core\AzBae.Core.csproj" />
+    </ItemGroup>
+
 </Project>

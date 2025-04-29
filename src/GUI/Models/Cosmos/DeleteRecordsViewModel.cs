@@ -1,14 +1,11 @@
-using System.Collections.ObjectModel;
+using AzBae.Core.Configuration;
 using Azure.Identity;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using DynamicData;
 using FluentValidation;
-using GUI.Configuration;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json.Linq;
-using Terminal.Gui;
 
 namespace GUI.Models.Cosmos;
 

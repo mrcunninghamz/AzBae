@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace GUI.Configuration;
+namespace AzBae.Core.Configuration;
 
 public class AzBaeSettings
 {
@@ -24,6 +24,7 @@ public class CosmosAppSettings
     public required string ContainerName { get; init; }
     public required string PartitionKey { get; init; }
 }
+
 public class CosmosSettingsValidator : AbstractValidator<CosmosAppSettings>
 {
     public CosmosSettingsValidator()

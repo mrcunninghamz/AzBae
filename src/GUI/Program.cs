@@ -1,7 +1,7 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using AzBae.Core.Configuration;
 using FluentValidation;
-using GUI.Configuration;
 using GUI.Models.Cosmos;
 using GUI.Views.Cosmos;
 using Microsoft.Extensions.Configuration;
