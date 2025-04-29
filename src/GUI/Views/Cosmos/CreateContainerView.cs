@@ -14,6 +14,7 @@ public class CreateContainerView : BaseCosmosView<CreateContainerActionTypes>
 
     public CreateContainerView(CreateContainerViewModel viewModel) : base(viewModel)
     {
+        HotKey = Key.C;
         _viewModel = viewModel;
     }
 

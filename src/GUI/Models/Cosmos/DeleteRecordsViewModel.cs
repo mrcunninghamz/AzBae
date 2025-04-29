@@ -41,6 +41,7 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
     private int _page;
     private int _pageSize = 10;
     private Container _container;
+    private CosmosClient _cosmosClient;
 
     public DeleteRecordsViewModel(IOptions<CosmosAppSettings> cosmosAppSettings) : base(cosmosAppSettings.Value)
     {
@@ -68,6 +69,12 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
         
         Validate();
         SendMessage(DeleteRecordsActionTypes.Initialize);
+        
+        var credentials = new DefaultAzureCredential();
+        _cosmosClient = new CosmosClient(
+            accountEndpoint: AccountEndpoint,
+            tokenCredential: credentials
+        );
     }
     
     public override void Validate()
@@ -81,17 +88,19 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
             Errors = string.Join("\n", validationResult.Errors.Select(x => x.ErrorMessage));
         }
     }
+    protected override void DisposeManaged()
+    {
+        _cosmosClient.Dispose();
+    }
+    protected override void DisposeUnmanaged()
+    {
+        // No unmanaged resources to dispose.
+    }
 
     private async Task RunQueryAsync()
     {
         SendMessage(DeleteRecordsActionTypes.QueryRunning);
-        var credentials = new DefaultAzureCredential();
-        using CosmosClient cosmosClient = new(
-            accountEndpoint: AccountEndpoint,
-            tokenCredential: credentials
-        );
-        _container = cosmosClient.GetContainer(DatabaseName, ContainerName);
-        
+        _container = _cosmosClient.GetContainer(DatabaseName, ContainerName);
         
         Results = new List<JObject>();
         using var resultSet = _container.GetItemQueryIterator<JObject>(new QueryDefinition(Query), requestOptions: new QueryRequestOptions

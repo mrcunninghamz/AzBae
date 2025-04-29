@@ -1,7 +1,7 @@
-using AutoFixture;
 using AzBae.Core.Configuration;
 using GUI.Models.Cosmos;
 using GUI.Views.Cosmos;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 using Terminal.Gui;
@@ -25,26 +25,23 @@ namespace AzBae.Tests.GUI
                 DatabaseName = "test-db",
                 PartitionKey = "id"
             };
-
-            // Initialize Terminal.GUI for testing
-            Application.Init();
         }
 
-        protected override void ConfigureFixture()
+        protected override void ConfigureServices(IServiceCollection services)
         {
-            Fixture.Behaviors.OfType<ThrowingRecursionBehavior>().ToList()
-                .ForEach(b => Fixture.Behaviors.Remove(b));
-            Fixture.Behaviors.Add(new OmitOnRecursionBehavior());
-            
-            // Create and configure mocks with AutoFixture
-            _mockOptions = Fixture.Freeze<Mock<IOptions<CosmosAppSettings>>>();
+            // Call the base implementation first to set up AutoMapper and the subject
+            base.ConfigureServices(services);
+
+            // Create and configure mocks
+            _mockOptions = new Mock<IOptions<CosmosAppSettings>>();
             _mockOptions.Setup(x => x.Value).Returns(_cosmosSettings);
-
-            // Create and freeze the view model
-            _viewModel = Fixture.Freeze<CreateContainerViewModel>();
-
-            // Configure the test subject (view) to use our mocked view model
-            Fixture.Inject(_viewModel);
+            
+            // Create view model
+            _viewModel = new CreateContainerViewModel(_mockOptions.Object);
+            
+            // Register mocked dependencies
+            services.AddSingleton(_mockOptions.Object);
+            services.AddSingleton(_viewModel);
         }
 
         [Fact]
