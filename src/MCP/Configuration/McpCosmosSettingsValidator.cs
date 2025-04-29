@@ -1,4 +1,4 @@
-﻿using AzBae.Core.Configuration;
+using AzBae.Core.Configuration;
 using FluentValidation;
 
 namespace AzBae.MCP.Configuration;
