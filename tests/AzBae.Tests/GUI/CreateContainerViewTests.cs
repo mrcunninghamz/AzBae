@@ -1,5 +1,5 @@
 using AutoFixture;
-using GUI.Configuration;
+using AzBae.Core.Configuration;
 using GUI.Models.Cosmos;
 using GUI.Views.Cosmos;
 using Microsoft.Extensions.Options;

@@ -1,6 +1,6 @@
+using AzBae.Core.Configuration;
 using CommunityToolkit.Mvvm.ComponentModel;
 using FluentValidation;
-using GUI.Configuration;
 
 namespace GUI.Models.Cosmos;
 

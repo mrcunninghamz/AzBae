@@ -2,9 +2,8 @@
 
 using System.Management.Automation;
 using System.Reflection;
-using CLI.Actions;
+using AzBae.Core.Configuration;
 using CLI.Commands;
-using CLI.Configuration;
 using CLI.Infrastructure;
 using CLI.Models;
 using Azure.Identity;

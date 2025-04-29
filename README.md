@@ -10,6 +10,10 @@ The GUI component is currently the main focus of development. It provides a user
 ### CLI
 **Note:** The CLI functionality is currently in early development and many features may be limited or unavailable. We are prioritizing the GUI development at this time, but will expand CLI support in future releases.
 
+### MCP (Model Context Protocol) Server
+The MCP server implementation is now available, allowing users to interact with Azure resources using natural language through tools like GitHub Copilot.
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -21,15 +25,14 @@ The GUI component is currently the main focus of development. It provides a user
 2. Build the solution using `dotnet build AzBae.sln`
 3. Configure your Azure credentials in the appropriate appsettings files
 
-## Future Features
+### Setting up the MCP Server in VS Code
+To use AzBae.MCP as an MCP server in VS Code:
 
-We're constantly working to improve AzBae. Here are some exciting features we're considering for future releases:
+1. Add the MCP server configuration to your VS Code `settings.json` file
+2. Configure your Cosmos DB credentials
+3. Start the server using VS Code's MCP commands
 
-### MCP (Model Context Protocol) Server
-We're planning to implement an MCP server for AzBae that will allow users to interact with their Azure resources using natural language through tools like GitHub Copilot. This will enable functionality such as:
-- Deleting CosmosDB records through natural language commands
-- Managing other Azure resources using simple language instructions
-- Automating complex Azure operations with conversational AI
+See the [MCP README](./src/MCP/README.md) for detailed setup instructions.
 
 ## Contributing
 

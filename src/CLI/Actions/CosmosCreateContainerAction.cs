@@ -1,7 +1,7 @@
 using AutoMapper;
+using AzBae.Core.Configuration;
 using CLI.Infrastructure;
 using CLI.Commands;
-using CLI.Configuration;
 using CLI.Models;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Options;
