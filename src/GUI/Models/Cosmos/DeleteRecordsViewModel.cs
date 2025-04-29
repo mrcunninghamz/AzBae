@@ -97,6 +97,7 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
     }
     protected override void DisposeUnmanaged()
     {
+        // No unmanaged resources to dispose.
     }
 
     private async Task RunQueryAsync()
