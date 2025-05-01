@@ -25,7 +25,6 @@ namespace AzBae.Core.Services
 
         public async Task<IEnumerable<FunctionApp>> GetFunctionAppsAsync()
         {
-            var subscription = await _armClient.GetDefaultSubscriptionAsync();
             var functionApps = new List<FunctionApp>();
 
             var tenant = _armClient.GetTenants().First();
