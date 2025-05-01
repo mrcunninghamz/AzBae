@@ -90,7 +90,10 @@ public partial class DeleteRecordsViewModel : BaseCosmosViewModel<DeleteRecordsA
     }
     protected override void DisposeManaged()
     {
-        _cosmosClient.Dispose();
+        if (_cosmosClient != null)
+        {
+            _cosmosClient.Dispose();
+        }
     }
     protected override void DisposeUnmanaged()
     {
