@@ -1,19 +1,21 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
 using AutoMapper;
+using AzBae.Core.Configuration;
 using AzBae.Core.Models.ARM;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
+using Microsoft.Extensions.Options;
 
 namespace AzBae.Core.Services
 {
     public interface IFunctionAppService
     {
         /// <summary>
-        /// Gets function apps with the option of filtering by access
+        ///  Gets function apps with the option of filtering by access, regex
         /// </summary>
         /// <param name="checkForAccess"></param>
         /// <returns></returns>
@@ -22,22 +24,36 @@ namespace AzBae.Core.Services
     public class FunctionAppService : IFunctionAppService
     {
         private readonly IMapper _mapper;
+        private readonly ResourceFilterSettings _filterSettings;
         private readonly ArmClient _armClient;
         private readonly AzureCliCredential _credential;
 
-        public FunctionAppService(IMapper mapper, ArmClient client, AzureCliCredential credential)
+        public FunctionAppService(IMapper mapper, IOptions<ResourceFilterSettings> filterSettings, ArmClient client, AzureCliCredential credential)
         {
             _mapper = mapper;
+            _filterSettings = filterSettings.Value;
             _armClient = client;
             _credential = credential;
         }
 
         public async Task<IEnumerable<FunctionApp>> GetFunctionAppsAsync(bool checkForAccess = false)
         {
+            var filterRegex = _filterSettings.FunctionAppFilterPattern;
+            var where = _filterSettings.FunctionAppWhere;
+            
             var functionApps = new List<FunctionApp>();
 
             var tenant = _armClient.GetTenants().First();
-            var queryContent = new ResourceQueryContent(query: "Resources | where type =~ 'Microsoft.Web/sites' and kind contains 'functionapp' | project id, name, tenantId, location, resourceGroup");
+            var filterRegexQuery = string.Empty;
+            if (!string.IsNullOrEmpty(filterRegex))
+            {
+                filterRegexQuery = $"| where resourceGroup matches regex \"{filterRegex}\" or name matches regex \"{filterRegex}\"";
+            }
+            var queryContent = new ResourceQueryContent(query: "Resources " +
+                                                               "| where type =~ 'Microsoft.Web/sites' and kind contains 'functionapp' " +
+                                                               $"{filterRegexQuery}" +
+                                                               $"| where {where}"+
+                                                               "| project id, name, tenantId, location, resourceGroup, state = properties.state");
             var response = await tenant.GetResourcesAsync(queryContent)!;
             
             // Deserialize the BinaryData into JSON elements
@@ -68,6 +84,7 @@ namespace AzBae.Core.Services
                     Location = jsonElement.GetProperty("location").GetString(),
                     ResourceGroup = jsonElement.GetProperty("resourceGroup").GetString(),
                     TenantId = jsonElement.GetProperty("tenantId").GetString(),
+                    State = jsonElement.GetProperty("state").GetString()
                 };
                 
                 if (checkForAccess)

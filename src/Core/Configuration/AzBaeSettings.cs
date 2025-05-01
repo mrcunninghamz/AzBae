@@ -47,6 +47,7 @@ public class ResourceFilterSettings
 {
     public const string SectionName = "ResourceFilters";
     public string? FunctionAppFilterPattern { get; init; }
+    public string? FunctionAppWhere { get; init; }
 }
 
 public class ResourceFilterSettingsValidator : AbstractValidator<ResourceFilterSettings>

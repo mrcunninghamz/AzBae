@@ -80,13 +80,9 @@ public class MainWindow : Window
                 CreateMenuItem("Create Container", () => SwitchView(createContainerView)),
                 CreateMenuItem("Delete Records", () => SwitchView(deleteRecordsView))
             }),
-            new MenuBarItem("Function Apps", new []
+            new MenuBarItem("FunctionApps", new []
             {
-                CreateMenuItem("My Function Apps", () =>
-                {
-                    SwitchView(functionAppView);
-                    functionAppView.LoadData();
-                })
+                CreateMenuItem("My Function Apps", () => SwitchView(functionAppView))
             }),
             new MenuBarItem("_Quit", "", () => Application.RequestStop())
         ];

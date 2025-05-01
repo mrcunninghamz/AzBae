@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Reactive.Linq;
 using GUI.Models.FunctionApps;
 using GUI.Models.Cosmos;
 using Terminal.Gui;
@@ -9,7 +10,7 @@ namespace GUI.Views.FunctionApps;
 public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
 {
     private readonly ListMyFunctionAppsViewModel _viewModel;
-    private TableView _functionAppsTableView = new();
+    private TableView _functionAppsTableView = new() { X = 0, Y = 0, Width = Dim.Fill (), Height = Dim.Fill (1) };
     private Label _filterStatusLabel;
     private TextField _filterPatternField;
     private Label _filterPatternLabel;
@@ -46,10 +47,18 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
             Width = 30
         };
         
-        _filterPatternField.TextChanged += (_, _) =>
-        {
-            _viewModel.FilterPattern = _filterPatternField.Text?.ToString() ?? string.Empty;
-        };
+        Observable.FromEventPattern<EventArgs>(_filterPatternField, nameof(TextField.TextChanged))
+            .Throttle(TimeSpan.FromMilliseconds(300))
+            .Subscribe(eventPattern => 
+            {
+                _viewModel.FilterPattern = _filterPatternField.Text?.ToString() ?? string.Empty;
+                _viewModel.ApplyFilter();
+            });
+        
+        // _filterPatternField.TextChanged += (_, args) =>
+        // {
+        //     _viewModel.FilterPattern = _filterPatternField.Text?.ToString() ?? string.Empty;
+        // };
         
         // Buttons - Row 2
         _applyFilterButton = new Button
@@ -105,8 +114,29 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
         {
             var table = args.Table as EnumerableTableSource<FunctionApp>;
             var functionApp = table!.GetObjectOnRow(args.Row);
-            // Open the function app in the browser when clicked
-            OpenBrowser(functionApp.PortalUri);
+            
+            var result = MessageBox.Query(
+                "Confirm Action", 
+                "View function app in the Azure Portal?", 
+                "Yes", "No");
+
+            if (result == 0) // Yes
+            {
+                // Open the function app in the browser when clicked
+                OpenBrowser(functionApp.PortalUri);
+            }
+        };
+
+        _functionAppsTableView.CellToggled += (_, args) =>
+        {
+            var table = args.Table as EnumerableTableSource<FunctionApp>;
+            var functionApp = table!.GetObjectOnRow(args.Row);
+
+            MessageBox.Query(
+                "Clipboard Action",
+                "Url to Portal Copied To Clipboard",
+                "OK");
+            TextCopy.ClipboardService.SetText(functionApp.PortalUri);
         };
         
         // Add elements to the view
@@ -123,32 +153,8 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
         _filterIcon.Visible = _viewModel.IsFilterActive;
         
         
-        _isInitialized = true;
-    }
-
-    public void LoadData()
-    {
-        // Initial data load
         Task.Run(async () => await _viewModel.LoadFunctionApps());
-        UpdateTable();
-    }
-
-   private void UpdateTable()
-    {
-        // Update the table view with current data
-        var apps = _viewModel.FunctionApps.ToList();
-        
-        // Set up the table source with columns for function app properties
-        _functionAppsTableView.Table = new EnumerableTableSource<FunctionApp>(
-            apps,
-            new Dictionary<string, Func<FunctionApp, object>>
-            {
-                { "Name", app => app.Name ?? string.Empty },
-                { "ResourceGroup", app => app.ResourceGroup ?? string.Empty },
-                { "Location", app => app.Location ?? string.Empty },
-                { "Status", app => app.Status ?? string.Empty },
-            }
-        );
+        _isInitialized = true;
     }
     
     public override void Receive(Message<ListMyFunctionAppsActionTypes> message)
@@ -168,6 +174,7 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
                 Remove(AzureDialog);
                 // Update the status label based on filter status
                 UpdateFilterStatus();
+                UpdateTable();
                 break;
                 
             case ListMyFunctionAppsActionTypes.FilterApplied:
@@ -194,5 +201,22 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
         _filterStatusLabel.Text = _viewModel.FilterStatusMessage;
         _filterStatusLabel.Visible = !string.IsNullOrEmpty(_viewModel.FilterStatusMessage);
         _filterIcon.Visible = _viewModel.IsFilterActive;
+    }
+
+    private void UpdateTable()
+    {
+        // Set up the table source with columns for function app properties
+        _functionAppsTableView.Table = new EnumerableTableSource<FunctionApp>(
+            _viewModel.FunctionApps,
+            new Dictionary<string, Func<FunctionApp, object>>
+            {
+                { "Name", app => app.Name ?? string.Empty },
+                { "ResourceGroup", app => app.ResourceGroup ?? string.Empty },
+                { "Location", app => app.Location ?? string.Empty },
+                { "Status", app => app.Status ?? string.Empty }
+            }
+        );
+
+        _functionAppsTableView.Visible = _viewModel.FunctionApps.Any();
     }
 }

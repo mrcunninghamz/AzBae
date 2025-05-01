@@ -6,8 +6,10 @@ using AzBae.Core.Services;
 using Azure.Identity;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using DynamicData;
 using FluentValidation;
 using Microsoft.Extensions.Options;
+using Terminal.Gui;
 
 namespace GUI.Models.FunctionApps;
 
@@ -67,13 +69,10 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
         try
         {
             var regex = new Regex(FilterPattern, RegexOptions.IgnoreCase);
-            var filteredList = Enumerable.Where<FunctionApp>(AllFunctionApps, app => regex.IsMatch((string)app.Name)).ToList();
+            var filteredList = AllFunctionApps.Where(app => regex.IsMatch(app.Name) ||  regex.IsMatch(app.ResourceGroup)).ToList();
             
             FunctionApps.Clear();
-            foreach (var app in filteredList)
-            {
-                FunctionApps.Add(app);
-            }
+            FunctionApps.AddRange(filteredList);
             
             FilterStatusMessage = $"Showing {FunctionApps.Count} of {AllFunctionApps.Count} function apps (filtered by '{FilterPattern}')";
             SendMessage(ListMyFunctionAppsActionTypes.FilterApplied);
@@ -96,6 +95,7 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
         
         IsFilterActive = false;
         FilterStatusMessage = string.Empty;
+        
         SendMessage(ListMyFunctionAppsActionTypes.FilterCleared);
     }
     
@@ -105,7 +105,7 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
     {
         SendMessage(ListMyFunctionAppsActionTypes.ListFunctionAppsProgress);
         
-        var functionApps = await _functionAppService.GetFunctionAppsAsync(true);
+        var functionApps = await _functionAppService.GetFunctionAppsAsync();
         var apps = functionApps.Select(x => _mapper.Map<FunctionApp>(x));
         
         AllFunctionApps.Clear();
