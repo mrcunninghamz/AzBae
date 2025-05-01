@@ -105,7 +105,7 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
     {
         SendMessage(ListMyFunctionAppsActionTypes.ListFunctionAppsProgress);
         
-        var functionApps = await _functionAppService.GetFunctionAppsAsync();
+        var functionApps = await _functionAppService.GetFunctionAppsAsync(true);
         var apps = functionApps.Select(x => _mapper.Map<FunctionApp>(x));
         
         AllFunctionApps.Clear();
