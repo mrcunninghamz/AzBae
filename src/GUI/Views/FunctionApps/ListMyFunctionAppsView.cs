@@ -117,26 +117,29 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
             
             var result = MessageBox.Query(
                 "Confirm Action", 
-                "View function app in the Azure Portal?", 
-                "Yes", "No");
+                "What would you like to do?", 
+                "View", "Copy Url", "View Log", "Cancel");
 
-            if (result == 0) // Yes
+            switch (result)
             {
-                // Open the function app in the browser when clicked
-                OpenBrowser(functionApp.PortalUri);
+                case 0: // View
+                    Application.AddTimeout(TimeSpan.FromMilliseconds(50), () => {
+                        // Open the function app in the browser when clicked
+                        OpenBrowser(functionApp.PortalUri);
+                        return false; // Return false to execute only once
+                    });
+                    break;
+                case 1: // Copy Url
+                    TextCopy.ClipboardService.SetText(functionApp.PortalUri);
+                    MessageBox.Query(
+                        "Clipboard Action",
+                        "Url to Portal Copied To Clipboard",
+                        "OK");
+                    break;
+                case 2: // View Log
+                    Task.Run(async () => await _viewModel.GetInstrumentationKey(functionApp.Id));
+                    break;
             }
-        };
-
-        _functionAppsTableView.CellToggled += (_, args) =>
-        {
-            var table = args.Table as EnumerableTableSource<FunctionApp>;
-            var functionApp = table!.GetObjectOnRow(args.Row);
-
-            MessageBox.Query(
-                "Clipboard Action",
-                "Url to Portal Copied To Clipboard",
-                "OK");
-            TextCopy.ClipboardService.SetText(functionApp.PortalUri);
         };
         
         // Add elements to the view
@@ -189,8 +192,27 @@ public class FunctionAppView : BaseView<ListMyFunctionAppsActionTypes>
                 _filterPatternField.Text = string.Empty;
                 UpdateTable();
                 break;
+            
+            case ListMyFunctionAppsActionTypes.AppInsightsRequested:
+                Add(AzureDialog);
+                AzureDialog.Text = "Getting App Insights...";
+                break;
+            
+            case ListMyFunctionAppsActionTypes.OpenAppInsights:
+                Remove(AzureDialog);
+                Application.AddTimeout(TimeSpan.FromMilliseconds(50), () => {
+                    // Open the function app in the browser when clicked
+                    OpenBrowser(_viewModel.AppInsightsUrl);
+                    return false; // Return false to execute only once
+                });
+                break;
                 
             case ListMyFunctionAppsActionTypes.Error:
+
+                if (SubViews.Contains(AzureDialog))
+                {
+                    Remove(AzureDialog);
+                }
                 ShowErrorDialog(_viewModel.Errors);
                 break;
         }

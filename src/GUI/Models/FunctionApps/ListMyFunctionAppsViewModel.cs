@@ -34,6 +34,9 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
     [ObservableProperty]
     private string _filterStatusMessage = string.Empty;
     
+    [ObservableProperty]
+    private string _appInsightsUrl = string.Empty;
+    
     public ListMyFunctionAppsViewModel(IMapper mapper, IFunctionAppService functionAppService, IOptions<ResourceFilterSettings>? filterSettings = null)
     {
         _mapper = mapper;
@@ -53,6 +56,24 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
     public override void Validate()
     {
         // Validation for filter pattern could go here
+    }
+    
+    [RelayCommand]
+    public async Task GetInstrumentationKey(string functionAppId)
+    {
+        var functionApp = FunctionApps.First(x => x.Id == functionAppId);
+        SendMessage(ListMyFunctionAppsActionTypes.AppInsightsRequested);
+        var url = await _functionAppService.GetAppInsightsUrl(functionApp.Id, functionApp.Name);
+        if (!string.IsNullOrEmpty(url))
+        {
+            AppInsightsUrl = url;
+            SendMessage(ListMyFunctionAppsActionTypes.OpenAppInsights);
+        }
+        else
+        {
+            Errors = "Failed to retrieve instrumentation key.";
+            SendMessage(ListMyFunctionAppsActionTypes.Error);
+        }
     }
     
     [RelayCommand]

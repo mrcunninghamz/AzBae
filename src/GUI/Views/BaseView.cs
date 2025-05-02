@@ -103,26 +103,36 @@ public abstract class BaseView<T> : Window, IRecipient<Message<T>> where T : Enu
         
         try
         {
+            ProcessStartInfo psi;
+        
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                // Windows
-                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
-            }
-            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-            {
-                // macOS
-                Process.Start("open", url);
+                psi = new ProcessStartInfo(url) { UseShellExecute = true };
             }
             else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
             {
-                // Linux
-                Process.Start("xdg-open", url);
+                psi = new ProcessStartInfo("xdg-open", url);
             }
+            else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+            {
+                psi = new ProcessStartInfo("open", url);
+            }
+            else
+            {
+                throw new PlatformNotSupportedException("Cannot open browser on this platform");
+            }
+        
+            // Set these properties to prevent UI freeze
+            psi.CreateNoWindow = true;
+            psi.UseShellExecute = true;
+        
+            // Launch without waiting
+            using var process = Process.Start(psi);
         }
         catch (Exception ex)
         {
             // Handle or log any exceptions
-            Console.WriteLine($"Failed to open URL: {ex.Message}");
+            // Console.WriteLine($"Failed to open URL: {ex.Message}");
         }
     }
 }

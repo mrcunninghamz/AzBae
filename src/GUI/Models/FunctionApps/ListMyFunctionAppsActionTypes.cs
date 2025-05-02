@@ -9,5 +9,7 @@ public enum ListMyFunctionAppsActionTypes
     ListFunctionAppsFinished,
     FilterApplied,
     FilterCleared,
+    AppInsightsRequested,
+    OpenAppInsights,
     Error
 }

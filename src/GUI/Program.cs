@@ -30,7 +30,7 @@ builder.Logging.ClearProviders();
 builder.Services.AddLogging(builder =>
 {
     var logger = new LoggerConfiguration()
-        .MinimumLevel.Error()
+        .MinimumLevel.Verbose()
         .WriteTo.File ("logs/logfile.txt", rollingInterval: RollingInterval.Day)
         .CreateLogger();
 

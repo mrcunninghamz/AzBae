@@ -1,13 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Text.Json;
+using System.Web;
 using AutoMapper;
 using AzBae.Core.Configuration;
 using AzBae.Core.Models.ARM;
+using Azure.Core;
 using Azure.Identity;
 using Azure.ResourceManager;
 using Azure.ResourceManager.AppService;
 using Azure.ResourceManager.ResourceGraph;
 using Azure.ResourceManager.ResourceGraph.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace AzBae.Core.Services
@@ -20,20 +23,50 @@ namespace AzBae.Core.Services
         /// <param name="checkForAccess"></param>
         /// <returns></returns>
         Task<IEnumerable<FunctionApp>> GetFunctionAppsAsync(bool checkForAccess = false);
+        Task<string> GetAppInsightsUrl(string functionAppId, string name);
     }
     public class FunctionAppService : IFunctionAppService
     {
+        private readonly ILogger<FunctionAppService> _logger;
         private readonly IMapper _mapper;
         private readonly ResourceFilterSettings _filterSettings;
         private readonly ArmClient _armClient;
         private readonly AzureCliCredential _credential;
 
-        public FunctionAppService(IMapper mapper, IOptions<ResourceFilterSettings> filterSettings, ArmClient client, AzureCliCredential credential)
+        public FunctionAppService(ILogger<FunctionAppService> logger, IMapper mapper, IOptions<ResourceFilterSettings> filterSettings, ArmClient client, AzureCliCredential credential)
         {
+            _logger = logger;
             _mapper = mapper;
             _filterSettings = filterSettings.Value;
             _armClient = client;
             _credential = credential;
+        }
+        
+        public async Task<string> GetAppInsightsUrl(string functionAppId, string name)
+        {
+            var instrumentationKey = await GetInstrumentationKey(functionAppId);
+
+            if (string.IsNullOrEmpty(instrumentationKey))
+            {
+                return string.Empty;
+            }
+            
+            var tenant = _armClient.GetTenants().First();
+            var queryContent = new ResourceQueryContent(query: "resources" +
+                                                               $"| where type == \"microsoft.insights/components\" and properties.InstrumentationKey == \"{instrumentationKey}\"");
+            var response = await tenant.GetResourcesAsync(queryContent)!;
+            
+            // Deserialize the BinaryData into JSON elements
+            var resourceData = response.Value.Data.ToObjectFromJson<JsonElement[]>();
+            
+            var id = resourceData?[0].GetProperty("id").GetString() ?? string.Empty;
+            var table = "{\"tables\":[\"availabilityResults\",\"requests\",\"exceptions\",\"pageViews\",\"traces\",\"customEvents\",\"dependencies\"]," +
+                        "\"timeContextWhereClause\":\"| where timestamp > datetime(\\\"" + DateTime.UtcNow.AddDays(-1).ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\\\") and timestamp < datetime(\\\"" + DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'") + "\\\")\"," +
+                        "\"filterWhereClause\":\"| where not(operation_Name in (\\\"HealthCheck\\\"))| where * has \\\"" + name + "\\\"| order by timestamp desc\"," +
+                        "\"originalParams\":{\"eventTypes\":[{\"value\":\"availabilityResult\",\"tableName\":\"availabilityResults\",\"label\":\"Availability\"},{\"value\":\"request\",\"tableName\":\"requests\",\"label\":\"Request\"},{\"value\":\"exception\",\"tableName\":\"exceptions\",\"label\":\"Exception\"},{\"value\":\"pageView\",\"tableName\":\"pageViews\",\"label\":\"Page View\"},{\"value\":\"trace\",\"tableName\":\"traces\",\"label\":\"Trace\"},{\"value\":\"customEvent\",\"tableName\":\"customEvents\",\"label\":\"Custom Event\"},{\"value\":\"dependency\",\"tableName\":\"dependencies\",\"label\":\"Dependency\"}],\"timeContext\":{\"durationMs\":86400000},\"filter\":[{\"dimension\":{\"displayName\":\"Operation name\",\"tables\":[\"availabilityResults\",\"requests\",\"exceptions\",\"pageViews\",\"traces\",\"customEvents\",\"dependencies\"],\"name\":\"operation/name\",\"draftKey\":\"operation/name\"},\"values\":[\"HealthCheck\"],\"operator\":{\"label\":\"!=\",\"value\":\"!==\"}}]," +
+                        "\"searchPhrase\":{\"originalPhrase\":\"" + name + "\",\"_tokens\":[{\"conjunction\":\"and\",\"value\":\"" + name + "\",\"isNot\":false,\"kql\":\" * has \\\"" + name + "\\\"\"}]},\"sort\":\"desc\"}}";
+
+            return $"https://portal.azure.com/#blade/AppInsightsExtension/BladeRedirect/BladeName/searchV1/ResourceId/{HttpUtility.UrlEncode(id)}/BladeInputs/{HttpUtility.UrlEncode(table)}";
         }
 
         public async Task<IEnumerable<FunctionApp>> GetFunctionAppsAsync(bool checkForAccess = false)
@@ -103,6 +136,58 @@ namespace AzBae.Core.Services
             return functionApps;
         }
 
+        private async Task<string> GetInstrumentationKey(string functionAppId)
+        {
+            var resourceId = new ResourceIdentifier(functionAppId);
+            var function =  _armClient.GetWebSiteResource(resourceId);
+            var instrumentationKey = string.Empty;
+            try
+            {
+                var appSettingResponse = await function.GetApplicationSettingsAsync();
+                var setting = appSettingResponse.Value.Properties["APPINSIGHTS_INSTRUMENTATIONKEY"];
+                if (setting != null)
+                {
+                    instrumentationKey = setting;
+                }
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+            {
+                _logger.LogInformation("App Insights instrumentation key not found for function app {FunctionAppId}", functionAppId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to get instrumentation key for function app {FunctionAppId}: {ErrorMessage}", 
+                    functionAppId, e.Message);
+            }
+
+
+            if (!string.IsNullOrEmpty(instrumentationKey))
+            {
+                return instrumentationKey;
+            }
+            
+            try
+            {
+                var appSettingResponse = await function.GetApplicationSettingsAsync();
+                var setting = appSettingResponse.Value.Properties["APPLICATIONINSIGHTS_CONNECTION_STRING"];
+                if (setting != null)
+                {
+                    instrumentationKey = ExtractInstrumentationKey(setting);
+                }
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+            {
+                _logger.LogInformation("App Insights instrumentation key not found for function app {FunctionAppId}", functionAppId);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Failed to get instrumentation key for function app {FunctionAppId}: {ErrorMessage}", 
+                    functionAppId, e.Message);
+            }
+
+            return instrumentationKey;
+        }
+
         private async Task<string> GetPrincipalId()
         {
             var scopes = new[] { "https://graph.microsoft.com/.default" };
@@ -113,6 +198,25 @@ namespace AzBae.Core.Services
             var upn = jsonToken.Claims.First(c => c.Type == "oid").Value;
 
             return upn;
+        }
+        
+        private static string ExtractInstrumentationKey(string connectionString)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+                return string.Empty;
+        
+            // Pattern to match InstrumentationKey=value; in the connection string
+            var match = System.Text.RegularExpressions.Regex.Match(
+                connectionString, 
+                @"InstrumentationKey=([^;]+)"
+            );
+    
+            if (match.Success && match.Groups.Count > 1)
+            {
+                return match.Groups[1].Value; // Return the captured value
+            }
+    
+            return string.Empty;
         }
     }
 }
