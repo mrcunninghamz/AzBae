@@ -86,10 +86,19 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
             ClearFilter();
             return;
         }
+
+        Regex regex;
+        if (IsValidRegex(FilterPattern))
+        {
+            regex = new Regex(FilterPattern, RegexOptions.IgnoreCase);
+        }
+        else
+        {
+            return;
+        }
         
         try
         {
-            var regex = new Regex(FilterPattern, RegexOptions.IgnoreCase);
             var filteredList = AllFunctionApps.Where(app => regex.IsMatch(app.Name) ||  regex.IsMatch(app.ResourceGroup)).ToList();
             
             FunctionApps.Clear();
@@ -157,6 +166,24 @@ public partial class ListMyFunctionAppsViewModel : BaseViewModel<ListMyFunctionA
     protected override void DisposeUnmanaged()
     {
         // Clean up unmanaged resources
+    }
+    
+    private bool IsValidRegex(string pattern)
+    {
+        if (string.IsNullOrWhiteSpace(pattern))
+            return false;
+        
+        try
+        {
+            // Attempt to create a Regex object with the pattern
+            Regex.IsMatch("", pattern);
+            return true;
+        }
+        catch (ArgumentException)
+        {
+            // If ArgumentException is thrown, the pattern is invalid
+            return false;
+        }
     }
 }
 
