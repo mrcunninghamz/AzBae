@@ -1,14 +1,13 @@
+using AzBae.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AzBae.Core.Configuration;
-using AzBae.MCP.Configuration;
-using AzBae.MCP.Tools;
 using FluentValidation;
+using Microsoft.AspNetCore.Builder;
 
 // Create the application builder
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder();
 
 // Configure to use environmental variables then to use appsettings.local.json
 builder.Configuration
@@ -25,21 +24,26 @@ builder.Logging.AddConsole(consoleLogOptions =>
 // Load and validate settings
 var azBaeSettings = new AzBaeSettings
 {
-    CosmosSettings = builder.Configuration.GetSection(CosmosAppSettings.SectionName).Get<CosmosAppSettings>()
+    CosmosSettings = builder.Configuration.GetSection(CosmosAppSettings.SectionName).Get<CosmosAppSettings>(),
+    ResourceFilters = builder.Configuration.GetSection(ResourceFilterSettings.SectionName).Get<ResourceFilterSettings>()
 };
-var settingsValidator = new AzBaeMcpSettingsValidator();
+var settingsValidator = new AzBaeSettingsValidator();
 settingsValidator.Validate(azBaeSettings, options => options.ThrowOnFailures());
 
 // Register settings with DI
-builder.Services.Configure<CosmosAppSettings>(builder.Configuration.GetSection(CosmosAppSettings.SectionName));
+builder.Services.Configure<CosmosAppSettings>(
+    builder.Configuration.GetSection(CosmosAppSettings.SectionName));
+    
+builder.Services.Configure<ResourceFilterSettings>(
+    builder.Configuration.GetSection(ResourceFilterSettings.SectionName));
 
-// Register CosmosDB tool
-builder.Services.AddSingleton<CosmosDbTool>();
+builder.Services.AddCore();
+
 
 // Add the MCP server
 builder.Services
     .AddMcpServer()
-    .WithStdioServerTransport()
+    .WithHttpTransport()
     .WithToolsFromAssembly();
 
 // Build and run the host
@@ -47,5 +51,8 @@ var host = builder.Build();
 
 var logger = host.Services.GetRequiredService<ILogger<Program>>();
 logger.LogInformation("Configuration loaded. Any settings from appsettings.local.json are now available.");
+
+
+host.MapMcp("/mcp");
 
 await host.RunAsync();

@@ -8,7 +8,7 @@ using ModelContextProtocol.Server;
 
 namespace AzBae.MCP.Tools
 {
-    
+
     [McpServerToolType]
     public class CosmosDbTool
     {
