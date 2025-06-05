@@ -18,7 +18,11 @@
         <PackageReference Include="ReactiveUI.Fody" Version="19.5.41" />
         <PackageReference Include="ReactiveUI" Version="20.1.1" />
         <PackageReference Include="ReactiveMarbles.ObservableEvents.SourceGenerator" Version="1.3.1" PrivateAssets="all" />
+        <PackageReference Include="Serilog" Version="4.2.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="9.0.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="Terminal.Gui" Version="2.0.0-prealpha.1895" />
+        <PackageReference Include="TextCopy" Version="6.2.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -29,6 +33,10 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Core\AzBae.Core.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Profiles\" />
     </ItemGroup>
 
 </Project>

@@ -5,6 +5,7 @@ namespace AzBae.Core.Configuration;
 public class AzBaeSettings
 {
     public CosmosAppSettings? CosmosSettings { get; init; }
+    public ResourceFilterSettings? ResourceFilters { get; init; }
 }
 
 public class AzBaeSettingsValidator : AbstractValidator<AzBaeSettings>
@@ -12,6 +13,11 @@ public class AzBaeSettingsValidator : AbstractValidator<AzBaeSettings>
     public AzBaeSettingsValidator()
     {
         RuleFor(x => x.CosmosSettings).NotNull().SetValidator(new CosmosSettingsValidator()!);
+        // Resource filters are optional, but if provided should be valid
+        When(x => x.ResourceFilters != null, () =>
+        {
+            RuleFor(x => x.ResourceFilters).SetValidator(new ResourceFilterSettingsValidator()!);
+        });
     }
 }
 
@@ -34,5 +40,21 @@ public class CosmosSettingsValidator : AbstractValidator<CosmosAppSettings>
         RuleFor(x => x.DatabaseName).NotNull().NotEmpty().WithMessage("Please ensure that you have entered CosmosDb:databaseName"); 
         RuleFor(x => x.ContainerName).NotNull().NotEmpty().WithMessage("Please ensure that you have entered CosmosDb:containerName"); 
         RuleFor(x => x.PartitionKey).NotNull().NotEmpty().WithMessage("Please ensure that you have entered CosmosDb:containerKey"); 
+    }
+}
+
+public class ResourceFilterSettings
+{
+    public const string SectionName = "ResourceFilters";
+    public string? FunctionAppFilterPattern { get; init; }
+    public string? FunctionAppWhere { get; init; }
+}
+
+public class ResourceFilterSettingsValidator : AbstractValidator<ResourceFilterSettings>
+{
+    public ResourceFilterSettingsValidator()
+    {
+        // No validation rules are enforced for filter patterns
+        // Empty or null patterns should disable filtering
     }
 }

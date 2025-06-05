@@ -7,6 +7,8 @@ AzBae is a tool for managing and interacting with Azure resources. The project c
 ### GUI
 The GUI component is currently the main focus of development. It provides a user-friendly interface for managing Azure resources and is more feature-complete compared to the CLI.
 
+See the [GUI README](./src/GUI/README.md) for detailed information on features and configuration.
+
 ### CLI
 **Note:** The CLI functionality is currently in early development and many features may be limited or unavailable. We are prioritizing the GUI development at this time, but will expand CLI support in future releases.
 

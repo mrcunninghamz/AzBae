@@ -6,13 +6,6 @@ namespace GUI.Views.Cosmos;
 public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
 {
     private readonly BaseCosmosViewModel<T> _viewModel;
-    protected Dialog AzureDialog = new()
-    {
-        Title = "Working with Azure...",
-        ButtonAlignment = MessageBox.DefaultButtonAlignment,
-        ButtonAlignmentModes = AlignmentModes.StartToEnd | AlignmentModes.AddSpaceBetweenItems,
-        BorderStyle = MessageBox.DefaultBorderStyle,
-    };
     protected readonly TextField AccountEndpointField = new();
     protected readonly Label AccountEndpointLabel = new();
     protected readonly Label DatabaseNamelabel = new();
@@ -30,15 +23,6 @@ public abstract class BaseCosmosView<T> : BaseView<T> where T : Enum
     public override void InitializeComponent()
     {
         base.InitializeComponent();
-
-        AzureDialog.Width = Dim.Auto (DimAutoStyle.Auto,
-            minimumContentDim: Dim.Func (() => (int)((Application.Screen.Width - AzureDialog.GetAdornmentsThickness ().Horizontal) * (0 / 100f))),
-            maximumContentDim: Dim.Func (() => (int)((Application.Screen.Width - AzureDialog.GetAdornmentsThickness ().Horizontal) * 0.9f)));
-
-        AzureDialog.Height = Dim.Auto (DimAutoStyle.Auto,
-            minimumContentDim: Dim.Func (() => (int)((Application.Screen.Height - AzureDialog.GetAdornmentsThickness ().Vertical) * (0 / 100f))),
-            maximumContentDim: Dim.Func (() => (int)((Application.Screen.Height - AzureDialog.GetAdornmentsThickness ().Vertical) * 0.9f)));
-        AzureDialog.ColorScheme = Colors.ColorSchemes ["Dialog"];
         
         // Account Endpoint
         SetLabelAndField(label: AccountEndpointLabel, labelText: "Account Endpoint:", textField: AccountEndpointField);

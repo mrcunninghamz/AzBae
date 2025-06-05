@@ -1,7 +1,10 @@
 using GUI.Views.Cosmos;
+using GUI.Views.FunctionApps;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Serilog;
 using Terminal.Gui;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 public class AppGui : IHostedService
 {
@@ -16,58 +19,97 @@ public class AppGui : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        Logging.Logger = _logger;
         Application.Init();
         // Override the default configuration for the application to use the Light theme
         ConfigurationManager.RuntimeConfig = """{ "Theme": "Light" }""";
         Application.Run(_mainWindow);
+
+        // Before the application exits, reset Terminal.Gui for clean shutdown
+        Application.Shutdown ();
+        _logger.LogInformation("Application shutdown");
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("StopAsync");
-
         return Task.CompletedTask;
+    }
+    
+    private static ILogger CreateLogger()
+    {
+        // Configure Serilog to write logs to a file
+        Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Verbose() // Verbose includes Trace and Debug
+            .WriteTo.File ("logs/logfile.txt", rollingInterval: RollingInterval.Day)
+            .CreateLogger();
+
+        // Create a logger factory compatible with Microsoft.Extensions.Logging
+        using var loggerFactory = LoggerFactory.Create (builder =>
+        {
+            builder
+                .AddSerilog(dispose: true) // Integrate Serilog with ILogger
+                .SetMinimumLevel(LogLevel.Trace); // Set minimum log level
+        });
+        // Get an ILogger instance
+        return loggerFactory.CreateLogger ("Global Logger");
     }
 }
 
 public class MainWindow : Window
 {
+    private View _currentView;
+    private readonly MenuBar _menu;
+
     public MainWindow(
         CreateContainerView createContainerView,
-        DeleteRecordsView deleteRecordsView)
+        DeleteRecordsView deleteRecordsView,
+        FunctionAppView functionAppView)
     {
         Title = "AzBae";
-        
-        var menu = new MenuBar();
-        menu.Menus =
+        Width = Dim.Fill();
+        Height = Dim.Fill();
+
+        // Create menu once
+        _menu = new MenuBar();
+        _menu.Menus =
         [
             new MenuBarItem("Cosmos", new []
             {
-                new MenuItem("Create Container", string.Empty,
-                    () =>
-                    {
-                        RemoveAll();
-                        createContainerView.InitializeComponent();
-                        Add(menu);
-                        createContainerView.Y = Pos.Bottom(menu) + 1;
-                        Add(createContainerView);
-                    }),
-                new MenuItem("Delete Records", string.Empty,
-                    () =>
-                    {
-                        RemoveAll();
-                        deleteRecordsView.InitializeComponent();
-                        Add(menu);
-                        deleteRecordsView.Y = Pos.Bottom(menu) + 1;
-                        Add(deleteRecordsView);
-                    })
+                CreateMenuItem("Create Container", () => SwitchView(createContainerView)),
+                CreateMenuItem("Delete Records", () => SwitchView(deleteRecordsView))
             }),
-            new MenuBarItem("_Quit", "", () => { Application.RequestStop(); })
+            new MenuBarItem("FunctionApps", new []
+            {
+                CreateMenuItem("My Function Apps", () => SwitchView(functionAppView))
+            }),
+            new MenuBarItem("_Quit", "", () => Application.RequestStop())
         ];
-        
-        Add(menu);
 
+        // Initialize all views once
+        createContainerView.InitializeComponent();
+        deleteRecordsView.InitializeComponent();
+        functionAppView.InitializeComponent(); 
+
+        Add(_menu);
+    }
+
+    private MenuItem CreateMenuItem(string title, Action action)
+    {
+        return new MenuItem(title, string.Empty, action);
+    }
+
+    private void SwitchView(View view)
+    {
+        // Remove only the current content view if it exists
+        if (_currentView != null)
+            Remove(_currentView);
+            
+        // Position and add the new view
+        view.Y = Pos.Bottom(_menu) + 1;
+        Add(view);
+        _currentView = view;
     }
 }
 
